@@ -1,0 +1,4 @@
+2026-11-10 11:45:52.789 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Inserting hotplug event for state "out", display id: 4
+2026-11-10 11:45:52.789 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Processing hotplug "out" for display id: 4 (CA)
+2026-11-10 11:45:57.658 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Inserting hotplug event for state "in", display id: 4
+2026-11-10 11:45:57.660 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Processing hotplug "in" for display id: 4 (CA)

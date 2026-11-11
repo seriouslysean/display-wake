@@ -1,0 +1,25 @@
+#!/bin/sh
+# check runs every check a change must pass: what CI runs. One line per step; full output only on failure.
+set -u
+cd "$(dirname "$0")/.."
+
+fail=0
+step() {
+  name=$1
+  shift
+  if out=$("$@" 2>&1); then
+    echo "ok   $name"
+  else
+    echo "FAIL $name"
+    echo "$out"
+    fail=1
+  fi
+}
+gofmt_clean() {
+  out=$(gofmt -s -l .) || return 1
+  [ -z "$out" ] || { echo "needs gofmt -s:"; echo "$out"; return 1; }
+}
+step "gofmt -s" gofmt_clean
+step "go vet" go vet ./...
+step "go test" go test ./...
+exit $fail

@@ -1,0 +1,15 @@
+2026-11-10 21:04:01.015 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Replacing existing hotplug event for state "out" with "in", display id: 4
+2026-11-10 21:04:01.015 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Deferred hotplugs cannot be processed in a non-wake state
+2026-11-10 21:04:22.001 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Replacing existing hotplug event for state "in" with "out", display id: 4
+2026-11-10 21:04:22.001 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Deferred hotplugs cannot be processed in a non-wake state
+2026-11-10 21:04:26.947 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Replacing existing hotplug event for state "out" with "in", display id: 4
+2026-11-10 21:04:26.947 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Deferred hotplugs cannot be processed in a non-wake state
+2026-11-10 21:04:47.933 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Replacing existing hotplug event for state "in" with "out", display id: 4
+2026-11-10 21:04:47.933 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Deferred hotplugs cannot be processed in a non-wake state
+2026-11-10 21:04:52.875 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Replacing existing hotplug event for state "out" with "in", display id: 4
+2026-11-10 21:04:52.875 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Deferred hotplugs cannot be processed in a non-wake state
+2026-11-10 21:05:13.872 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Replacing existing hotplug event for state "in" with "out", display id: 4
+2026-11-10 21:05:13.872 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Deferred hotplugs cannot be processed in a non-wake state
+2026-11-10 21:05:18.811 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Replacing existing hotplug event for state "out" with "in", display id: 4
+2026-11-10 21:05:18.811 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Deferred hotplugs cannot be processed in a non-wake state
+2026-11-10 21:05:26.478 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Processing hotplug "in" for display id: 4 (CA)
