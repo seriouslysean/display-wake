@@ -22,6 +22,7 @@ Working on it: `scripts/check` runs everything CI runs.
 ## Docs
 
 - [How it works](docs/how-it-works.md): the reconnect loop, what display-wake does about it, and its limits.
+- [Background](docs/background.md): the evidence, the options ruled out, existing tools, and why this was needed.
 
 ## License
 
