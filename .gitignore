@@ -1,0 +1,4 @@
+/display-wake
+*.test
+coverage.out
+.claude/

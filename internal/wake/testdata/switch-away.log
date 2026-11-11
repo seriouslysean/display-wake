@@ -1,0 +1,2 @@
+2026-11-10 12:59:38.444 Df WindowServer[634:17d7] [com.apple.SkyLight:display] [ Display:Hotplug    ] Inserting hotplug event for state "out", display id: 4
+2026-11-10 12:59:38.444 Df WindowServer[634:1652] [com.apple.SkyLight:display] [ Display:Hotplug    ] Deferred hotplugs cannot be processed in a non-wake state
