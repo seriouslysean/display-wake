@@ -42,9 +42,10 @@ func run(args []string) error {
 		}
 	}
 	fs := flag.NewFlagSet("display-wake", flag.ContinueOnError)
-	cooldown := fs.Duration("cooldown", 10*time.Minute, "minimum time between wakes")
 	wakeFor := fs.Duration("wake", 3*time.Second, "how long each wake lasts")
-	settle := fs.Duration("settle", 10*time.Second, "wait before checking for input; idle this long means nobody is there")
+	settle := fs.Duration("settle", 15*time.Second, "first wait before the display goes back to sleep; doubles on each retry")
+	maxWakes := fs.Int("max-wakes", 3, "wakes allowed in one window")
+	window := fs.Duration("window", 10*time.Minute, "how long max-wakes covers")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -58,14 +59,15 @@ func run(args []string) error {
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("log stream: %w", err)
 	}
-	log.Printf("watching for deferred monitor reconnects (cooldown %s)", *cooldown)
+	log.Printf("watching for deferred monitor reconnects (up to %d wakes per %s)", *maxWakes, *window)
 	w := &wake.Watcher{
 		Sys:      mac{},
 		Now:      time.Now,
 		Logf:     log.Printf,
-		Cooldown: *cooldown,
 		WakeFor:  *wakeFor,
 		Settle:   *settle,
+		MaxWakes: *maxWakes,
+		Window:   *window,
 	}
 	if err := w.Run(out); err != nil {
 		return err

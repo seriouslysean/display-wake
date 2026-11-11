@@ -73,21 +73,27 @@ type System interface {
 	Wait(d time.Duration)
 }
 
-// Watcher reads hotplug log lines and wakes the display once for each deferred reconnect.
+// Watcher reads hotplug log lines and wakes the display when a reconnect is deferred.
+//
+// A monitor can drop and reconnect a few seconds after the display goes to sleep, which
+// starts the loop again. So a deferred reconnect after Watcher's own sleep gets another wake
+// with twice the wait, up to MaxWakes in each Window.
 type Watcher struct {
 	Sys      System
 	Now      func() time.Time
 	Logf     func(format string, args ...any)
-	Cooldown time.Duration // minimum time between wakes
 	WakeFor  time.Duration // how long the wake lasts
-	Settle   time.Duration // wait before checking for input; also the idle time that counts as nobody there
+	Settle   time.Duration // first wait before sleeping; the display sleeps only if there was no input for the whole wait
+	MaxWakes int           // wakes allowed in one Window
+	Window   time.Duration
 
-	last  Kind
-	woken time.Time
+	last        Kind
+	windowStart time.Time
+	wakes       int
 }
 
-// Run reads log lines from r until it ends. It returns the first error from r or from the
-// system; a failed wake or sleep is logged and Run carries on.
+// Run reads log lines from r until it ends and returns any read error. A failed wake or
+// sleep is logged and Run carries on.
 func (w *Watcher) Run(r io.Reader) error {
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
@@ -105,23 +111,27 @@ func (w *Watcher) Run(r io.Reader) error {
 
 func (w *Watcher) handle() {
 	now := w.Now()
-	if !w.woken.IsZero() && now.Sub(w.woken) < w.Cooldown {
-		w.Logf("deferred reconnect: within cooldown, skipped")
+	if w.windowStart.IsZero() || now.Sub(w.windowStart) >= w.Window {
+		w.windowStart, w.wakes = now, 0
+	}
+	if w.wakes >= w.MaxWakes {
+		w.Logf("deferred reconnect: %d wakes in %s already, skipped", w.wakes, w.Window)
 		return
 	}
-	w.woken = now
-	w.Logf("deferred reconnect: waking display for %s", w.WakeFor)
+	wait := w.Settle << w.wakes
+	w.wakes++
+	w.Logf("deferred reconnect: waking display (wake %d of %d, wait %s)", w.wakes, w.MaxWakes, wait)
 	if err := w.Sys.Wake(w.WakeFor); err != nil {
 		w.Logf("wake failed: %v", err)
 		return
 	}
-	w.Sys.Wait(w.Settle)
+	w.Sys.Wait(wait)
 	idle, err := w.Sys.Idle()
 	if err != nil {
 		w.Logf("idle time unreadable, display left on: %v", err)
 		return
 	}
-	if idle < w.Settle {
+	if idle < wait {
 		w.Logf("input %s ago: display left on", idle.Round(time.Second))
 		return
 	}
