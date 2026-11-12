@@ -17,12 +17,24 @@ type fakeSystem struct {
 	waits   []time.Duration
 	wakes   int
 	sleeps  int
+	held    bool // the display is held on
+	unheld  int  // waits that passed without the display held on
 }
 
-func (f *fakeSystem) Wake(time.Duration) error     { f.wakes++; return nil }
+func (f *fakeSystem) Wake(time.Duration) (func(), error) {
+	f.wakes++
+	f.held = true
+	return func() { f.held = false }, nil
+}
 func (f *fakeSystem) Idle() (time.Duration, error) { return f.idle, f.idleErr }
 func (f *fakeSystem) SleepDisplay() error          { f.sleeps++; return nil }
-func (f *fakeSystem) Wait(d time.Duration)         { f.waits = append(f.waits, d); f.now = f.now.Add(d) }
+func (f *fakeSystem) Wait(d time.Duration) {
+	if !f.held {
+		f.unheld++
+	}
+	f.waits = append(f.waits, d)
+	f.now = f.now.Add(d)
+}
 
 // newRun returns a fake Mac whose clock starts at the first line of fixture, and a Watcher
 // with the command's default settings.
@@ -37,7 +49,6 @@ func newRun(t *testing.T, fixture string) (*fakeSystem, *Watcher) {
 		Sys:      sys,
 		Now:      func() time.Time { return sys.now },
 		Logf:     func(string, ...any) {},
-		WakeFor:  3 * time.Second,
 		Settle:   15 * time.Second,
 		MaxWakes: 3,
 		Window:   10 * time.Minute,
@@ -126,7 +137,8 @@ func TestAwakeReconnectDoesNothing(t *testing.T) {
 	}
 }
 
-// Someone who switched back to use the Mac must not have the display put to sleep on them.
+// Someone who switched back to use the Mac must not have the display go dark on them: it is
+// held on through the whole wait, then left on and handed back to macOS's own display sleep.
 func TestRecentInputLeavesDisplayOn(t *testing.T) {
 	lines := fixture(t, "wake-ends-loop.log")
 	sys, w := newRun(t, lines)
@@ -134,6 +146,9 @@ func TestRecentInputLeavesDisplayOn(t *testing.T) {
 	run(t, w, lines)
 	if sys.wakes != 1 || sys.sleeps != 0 {
 		t.Errorf("wakes, sleeps = %d, %d; want 1, 0", sys.wakes, sys.sleeps)
+	}
+	if sys.unheld != 0 || sys.held {
+		t.Errorf("waits without the display held %d, still held after %v; want 0, false", sys.unheld, sys.held)
 	}
 }
 
