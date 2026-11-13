@@ -42,7 +42,6 @@ func run(args []string) error {
 		}
 	}
 	fs := flag.NewFlagSet("display-wake", flag.ContinueOnError)
-	wakeFor := fs.Duration("wake", 3*time.Second, "how long each wake lasts")
 	settle := fs.Duration("settle", 15*time.Second, "first wait before the display goes back to sleep; doubles on each retry")
 	maxWakes := fs.Int("max-wakes", 3, "wakes allowed in one window")
 	window := fs.Duration("window", 10*time.Minute, "how long max-wakes covers")
@@ -64,7 +63,6 @@ func run(args []string) error {
 		Sys:      mac{},
 		Now:      time.Now,
 		Logf:     log.Printf,
-		WakeFor:  *wakeFor,
 		Settle:   *settle,
 		MaxWakes: *maxWakes,
 		Window:   *window,
@@ -79,10 +77,29 @@ func run(args []string) error {
 // mac runs the macOS commands behind wake.System.
 type mac struct{}
 
-func (mac) Wake(d time.Duration) error {
-	secs := max(int(d.Round(time.Second)/time.Second), 1)
-	return exec.Command("/usr/bin/caffeinate", "-u", "-t", strconv.Itoa(secs)).Run()
+// Wake holds a display-sleep assertion (caffeinate -d), then declares user activity
+// (caffeinate -u) to turn the display on. Without the hold, macOS turns the display off
+// again when the user-activity assertion times out. The -t cap ends the hold if release
+// is never called.
+func (mac) Wake(d time.Duration) (func(), error) {
+	secs := int((d + holdMargin).Round(time.Second) / time.Second)
+	hold := exec.Command("/usr/bin/caffeinate", "-d", "-t", strconv.Itoa(secs))
+	if err := hold.Start(); err != nil {
+		return nil, fmt.Errorf("caffeinate -d: %w", err)
+	}
+	release := func() {
+		_ = hold.Process.Kill()
+		_ = hold.Wait()
+	}
+	if err := exec.Command("/usr/bin/caffeinate", "-u", "-t", "1").Run(); err != nil {
+		release()
+		return nil, fmt.Errorf("caffeinate -u: %w", err)
+	}
+	return release, nil
 }
+
+// holdMargin keeps the hold past the wait so it is still in place when the watcher decides.
+const holdMargin = 5 * time.Second
 
 func (mac) Idle() (time.Duration, error) {
 	out, err := exec.Command("/usr/sbin/ioreg", "-c", "IOHIDSystem").Output()

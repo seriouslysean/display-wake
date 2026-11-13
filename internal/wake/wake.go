@@ -63,8 +63,9 @@ func Parse(line string) Kind {
 
 // System is what Watcher needs from the Mac.
 type System interface {
-	// Wake declares user activity for d, which turns the display on.
-	Wake(d time.Duration) error
+	// Wake turns the display on and keeps it from idle sleep for up to d, or until
+	// release is called.
+	Wake(d time.Duration) (release func(), err error)
 	// Idle is the time since the last keyboard or mouse input.
 	Idle() (time.Duration, error)
 	// SleepDisplay puts the display to sleep now.
@@ -82,7 +83,6 @@ type Watcher struct {
 	Sys      System
 	Now      func() time.Time
 	Logf     func(format string, args ...any)
-	WakeFor  time.Duration // how long the wake lasts
 	Settle   time.Duration // first wait before sleeping; the display sleeps only if there was no input for the whole wait
 	MaxWakes int           // wakes allowed in one Window
 	Window   time.Duration
@@ -121,12 +121,17 @@ func (w *Watcher) handle() {
 	wait := w.Settle << w.wakes
 	w.wakes++
 	w.Logf("deferred reconnect: waking display (wake %d of %d, wait %s)", w.wakes, w.MaxWakes, wait)
-	if err := w.Sys.Wake(w.WakeFor); err != nil {
+	// The display stays held on for the whole wait. A wake that only declares user activity
+	// lets macOS turn the display off again as soon as that activity ends, even while
+	// someone who just switched back is starting to use the Mac.
+	release, err := w.Sys.Wake(wait)
+	if err != nil {
 		w.Logf("wake failed: %v", err)
 		return
 	}
 	w.Sys.Wait(wait)
 	idle, err := w.Sys.Idle()
+	release()
 	if err != nil {
 		w.Logf("idle time unreadable, display left on: %v", err)
 		return
